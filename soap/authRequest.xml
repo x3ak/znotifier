@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+    <soap:Header>
+        <context xmlns="urn:zimbraAccount">
+        </context>
+    </soap:Header>
+    <soap:Body>
+        <AuthRequest xmlns="urn:zimbraAccount">
+            <account by="name">ACCOUNT_PLACEHOLDER</account>
+            <password>PASSWORD_PLACEHOLDER</password>
+        </AuthRequest>
+    </soap:Body>
+</soap:Envelope>

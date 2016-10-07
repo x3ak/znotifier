@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        form > div:not(:last-child) {
+            margin-bottom: 0.65em;
+        }
+
+        .button-strip {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .options-page {
+            display: none;
+        }
+
+        .options-page.active {
+            display: block;
+        }
+
+        .settings-row {
+            margin: 0.65em 0;
+        }
+
+        body > section > section {
+            -webkit-padding-start: 18px;
+            margin-bottom: 24px;
+            margin-top: 8px;
+            max-width: 600px;
+        }
+
+        section > h3 {
+            margin-left: -18px;
+        }
+
+        #authentication-form label {
+            display: flex;
+            align-items: center;
+        }
+
+        #authentication-form label span {
+            width: 75px;
+        }
+
+        #authentication-form label input {
+            width: 200px;
+        }
+
+        #authentication-form #authentication-error {
+            display: none;
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+<section class="options-page" id="authentication-page">
+    <h4>Authenticate with your credentials</h4>
+
+    <form method="post" id="authentication-form">
+        <div class="settings-row">
+            <label>
+                <span>Account:</span>
+                <input type="text" name="account" required placeholder="Your zimbra account name" model="account">
+            </label>
+        </div>
+        <div class="settings-row">
+            <label>
+                <span>Password:</span>
+                <input type="password" name="password" required placeholder="Your zimbra password">
+            </label>
+        </div>
+
+        <div class="button-strip settings-row">
+            <div>
+                <div class="settings-row" id="authentication-error">
+                    Could not authenticate!
+                </div>
+            </div>
+            <button type="submit">Authenticate</button>
+        </div>
+    </form>
+
+</section>
+
+<section class="options-page" id="index-page">
+    <section id="sign-in-section">
+        <h3>Sign in</h3>
+        <div id="sign-in-status" class="settings-row">Signed in as <span model="account"></span>.</div>
+        <div id="sign-in-buttons" class="settings-row" style="display: none">
+            <button disabled>Disconnect your account</button>
+        </div>
+    </section>
+
+    <section id="scheduler-seciont">
+        <h3>Scheduler</h3>
+
+        <div class="settings-row">
+            Check for the new messages every <b>1</b> minute(s).
+        </div>
+    </section>
+
+    <section id="folders-section">
+        <h3>Subscribed folders <a href="javascript:;" is="section-link" section="folders">manage</a> </h3>
+
+        <div class="settings-row">
+            Following folders will be verified for the new messages: <span id="folders-list-readonly"></span>
+        </div>
+    </section>
+</section>
+
+<section class="options-page" id="folders-page">
+    <div class="settings-row">
+        Pick the folders that must be scheduled for the new message verifications.
+    </div>
+
+    <form id="folders-form" class="settings-row">
+        <div id="folders-list"></div>
+        <div class="button-strip">
+            <button type="submit" id="save-subscribed-folders">Save</button>
+        </div>
+    </form>
+</section>
+
+<script src="jquery-3.1.1.min.js"></script>
+<script src="soap.js"></script>
+<script src="options.js"></script>
+
+</body>
+</html>
