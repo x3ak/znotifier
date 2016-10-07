@@ -8,8 +8,64 @@ let Router = {
             });
         },
         index: function (promise) {
-            chrome.storage.local.get(['account'], (items) => {
-                promise.resolve({account: items.account || ''});
+
+            chrome.storage.local.get(['account', 'interval'], (items) => {
+                chrome.storage.sync.get(['folders'], (syncItems) => {
+                    let $foldersListRO = $('#folders-list-readonly').html('');
+
+                    $.each((syncItems.folders || {}), (folderId, absPath) => {
+                        $foldersListRO.append('<li>' + absPath + '</li>');
+                    });
+
+                    promise.resolve({
+                        account: items.account || '',
+                        interval: items.interval || 1
+                    });
+                });
+            });
+        },
+        folders: function (promise) {
+            SOAP.getFolderRequest(authToken, function (response) {
+
+                let foldersSubscribed = [];
+
+                chrome.storage.sync.get(['folders'], (items) => {
+
+                    if (items.folders != undefined) {
+                        $.each(items.folders, function (folderId) {
+                            foldersSubscribed.push(folderId);
+                        });
+                    }
+
+                    let $foldersList = $('#folders-list').html('');
+                    let folders = [];
+
+                    $(response).find('folder[absFolderPath="/"] folder[view=message]').each((index, folder) => {
+
+                        let absPath = $(folder).attr('absFolderPath');
+                        let folderId = $(folder).attr('id');
+
+                        let row = $('<label />')
+                            .append('<input type=checkbox ' +
+                                'name="' + folderId + '" ' +
+                                'value="' + absPath + '"' +
+                                (foldersSubscribed.indexOf(folderId) > -1 ? 'checked="checked"' : '') +
+                                '> ')
+                            .append('<span>' + absPath + '</span>');
+
+                        $foldersList.append($('<div class="settings-row" />').append(row));
+                    });
+
+                    promise.resolve();
+                });
+
+
+
+            });
+        },
+        logout: function (promise) {
+            chrome.storage.local.clear(function () {
+                Router.showPage('authentication');
             });
         }
     },
@@ -17,12 +73,11 @@ let Router = {
         $('.options-page.active').removeClass('active');
 
         let promise = new $.Deferred();
-        if (this.controllers[identifier] != undefined) {
-            this.controllers[identifier](promise);
-            console.info('Executed controller for section: ', identifier);
-        } else {
-            promise.resolve(['aaaa']);
+        if (this.controllers[identifier] == undefined) {
+            console.error("No controller defined for: ", identifier);
         }
+
+        this.controllers[identifier](promise);
 
         promise.then((parameters) => {
 
@@ -39,55 +94,12 @@ let Router = {
     }
 };
 
-$(document).ready(function(){
-    console.log();
-});
-
 chrome.storage.local.get(['token', 'account'], function (items) {
 
     if (items.token == undefined) {
         Router.showPage('authentication');
     } else {
         authToken = items.token;
-        $('#account-name').html(items.account);
-
-        SOAP.getFolderRequest(authToken, function (response) {
-            let $foldersList = $('#folders-list');
-            let $foldersListRO = $('#folders-list-readonly');
-            $foldersListRO.html('');
-            let folders = [];
-
-            $(response).find('folder[absFolderPath="/"] folder[view=message]').each((index, folder) => {
-
-                let absPath = $(folder).attr('absFolderPath');
-                let folderId = $(folder).attr('id');
-
-                let row = $('<label />')
-                    .append('<input type=checkbox name="' + folderId + '" value="' + absPath + '"> ')
-                    .append('<span>' + absPath + '</span>');
-
-                $foldersList.append($('<div class="settings-row" />').append(row));
-            });
-
-            chrome.storage.sync.get(['folders'], (items) => {
-                let foldersSubscribed = [];
-
-                if (items.folders != undefined) {
-                    $.each(items.folders, function (folderId, absPath) {
-                        $foldersList.find('[name='+folderId+']').prop('checked', true);
-                        foldersSubscribed.push(absPath.replace(/^\//,''));
-                    });
-                }
-
-                if (foldersSubscribed.length > 0) {
-                    $foldersListRO.html(foldersSubscribed.join('; '));
-                } else {
-                    $foldersListRO.html('all');
-                }
-            });
-
-        });
-
         Router.showPage('index');
     }
 });
@@ -95,14 +107,10 @@ chrome.storage.local.get(['token', 'account'], function (items) {
 
 $(document).on('submit', 'form#folders-form', function(e){
     e.preventDefault();
-    let $foldersListRO = $('#folders-list-readonly');
-    $foldersListRO.html('');
 
     let folders = {};
     $(this).serializeArray().forEach(function (item) {
         folders[item.name] = item.value;
-
-        $foldersListRO.append('<li>'+ item.value + '</li>');
     });
 
     chrome.storage.sync.set({folders: folders}, () => {
@@ -127,7 +135,6 @@ $(document).on('submit', 'form#authentication-form', function (e) {
             console.info('Authenticated with token:', token);
             authToken = token;
 
-            $('#account-name').html(account);
             Router.showPage('index');
         });
     }, () => {

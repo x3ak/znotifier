@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "icons": {
-    "128": "icon-128.png"
+    "128": "images/icon-128.png"
   },
   "name": "Zimbra notifier",
   "short_name": "znotifier",

@@ -17,20 +17,25 @@ chrome.notifications.onButtonClicked.addListener(function (notificationId, butto
 
 // handle storage changes that might happen in the options
 chrome.storage.onChanged.addListener(function(changes, namespace) {
+    let shouldRestart = false;
+
     for (let key in changes) {
-        let storageChange = changes[key];
-
-        if (namespace == 'sync') {
-            if (key == 'folders') {
-                zimbra.folders = storageChange.newValue;
-                console.info('Folders changed to: ', zimbra.folders);
-            } else if (key == 'interval') {
-
-            }
-        } else if (namespace == 'local' && key == 'token') {
-            zimbra.token = storageChange.newValue;
-            console.info('Token changed to: ', zimbra.token);
+        switch (namespace) {
+            case 'sync':
+                if (['folders'].indexOf(key) != -1) {
+                    shouldRestart = true;
+                }
+                break;
+            case 'local':
+                if (['token', 'account', 'interval'].indexOf(key) != -1) {
+                    shouldRestart = true;
+                }
+                break;
         }
+    }
+
+    if (shouldRestart) {
+        restart();
     }
 });
 
@@ -40,7 +45,7 @@ function showNotification(unreadMessages) {
 
     chrome.notifications.create(NEW_MAIL_ID, {
         type: 'list',
-        iconUrl: 'icon-128.png',
+        iconUrl: 'images/icon-128.png',
         title: 'New message!' + suffix,
         requireInteraction: true,
         isClickable: true,
@@ -55,27 +60,42 @@ function showNotification(unreadMessages) {
 
 // main app logic
 let interval = null;
-$.when(
-    ZimbraNotifier.authenticate(),
-    ZimbraNotifier.loadSettings()
-).then(function(token, settings){
-    console.groupCollapsed('Initialization finished');
-    console.info('Using persisted token: ', token);
-    console.info('Loaded settings: ', settings);
-    console.groupEnd();
 
-    interval = setInterval(function() {
-        $.when(ZimbraNotifier.searchForUnreadMessages(token, settings.folders))
-            .then((messages) => {
-                if (messages.length > 0) {
-                    console.info('Found unread messages:', messages);
-                    showNotification(messages);
-                } else {
-                    console.info('No unread messages has been found:');
-                }
-            });
-    }, settings.interval);
-}).fail(() => {
-    console.warn('Initialization failed!');
-    chrome.runtime.openOptionsPage();
-});
+function start() {
+    console.info('Starting background task.');
+
+    $.when(
+        ZimbraNotifier.authenticate(),
+        ZimbraNotifier.loadSettings()
+    ).then(function(token, settings){
+        console.groupCollapsed('Initialization finished');
+        console.info('Using persisted token: ', token);
+        console.info('Loaded settings: ', settings);
+        console.groupEnd();
+
+        interval = setInterval(function() {
+            $.when(ZimbraNotifier.searchForUnreadMessages(token, settings.folders))
+                .then((messages) => {
+                    if (messages.length > 0) {
+                        console.info('Found unread messages:', messages);
+                        showNotification(messages);
+                    } else {
+                        console.info('No unread messages has been found:');
+                    }
+                });
+        }, settings.interval);
+    }).fail(() => {
+        console.warn('Initialization failed!');
+        chrome.runtime.openOptionsPage();
+    });
+
+}
+
+function restart() {
+    console.info('Restarting background task.');
+
+    clearInterval(interval);
+    start();
+}
+
+start();

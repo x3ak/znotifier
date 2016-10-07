@@ -58,6 +58,12 @@
             display: none;
             color: red;
         }
+
+        #folders-list {
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
     </style>
 </head>
 
@@ -95,8 +101,8 @@
     <section id="sign-in-section">
         <h3>Sign in</h3>
         <div id="sign-in-status" class="settings-row">Signed in as <span model="account"></span>.</div>
-        <div id="sign-in-buttons" class="settings-row" style="display: none">
-            <button disabled>Disconnect your account</button>
+        <div id="sign-in-buttons" class="settings-row">
+            <button is="section-link" section="logout">Disconnect your account</button>
         </div>
     </section>
 
@@ -104,7 +110,7 @@
         <h3>Scheduler</h3>
 
         <div class="settings-row">
-            Check for the new messages every <b>1</b> minute(s).
+            Check for the new messages every <b model="interval"></b> minute(s).
         </div>
     </section>
 
@@ -112,7 +118,7 @@
         <h3>Subscribed folders <a href="javascript:;" is="section-link" section="folders">manage</a> </h3>
 
         <div class="settings-row">
-            Following folders will be verified for the new messages: <span id="folders-list-readonly"></span>
+            Following folders will be verified for the new messages: <ul id="folders-list-readonly"></ul>
         </div>
     </section>
 </section>
@@ -130,7 +136,7 @@
     </form>
 </section>
 
-<script src="jquery-3.1.1.min.js"></script>
+<script src="js/jquery-3.1.1.min.js"></script>
 <script src="js/soap.js"></script>
 <script src="js/options.js"></script>
 
