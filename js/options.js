@@ -1,27 +1,29 @@
 let authToken = null;
 
 let Router = {
+    _models: {},
     controllers: {
-        authentication: function (promise) {
-            chrome.storage.local.get(['token', 'account'], (items) => {
-                promise.resolve({account: items.account || ''});
+        authentication: function (promise, scope) {
+            chrome.storage.local.get(['account'], (items) => {
+                scope.account = items.account || '';
             });
         },
-        index: function (promise) {
+        index: function (promise, scope) {
+            chrome.storage.local.get(['account', 'interval', 'mailEnabled', 'calendarEnabled'], (items) => {
 
-            chrome.storage.local.get(['account', 'interval'], (items) => {
-                chrome.storage.sync.get(['folders'], (syncItems) => {
-                    let $foldersListRO = $('#folders-list-readonly').html('');
+                scope.account = items.account || '';
+                scope.interval = (items.interval || 1) * 1;
 
-                    $.each((syncItems.folders || {}), (folderId, absPath) => {
-                        $foldersListRO.append('<li>' + absPath + '</li>');
-                    });
-
-                    promise.resolve({
-                        account: items.account || '',
-                        interval: items.interval || 1
-                    });
-                });
+                scope.mailEnabled = (items.mailEnabled || 1) == 1;
+                scope.calendarEnabled = (items.calendarEnabled || 1) == 1;
+                //
+                // chrome.storage.sync.get(['folders'], (syncItems) => {
+                //     let $foldersListRO = $('#folders-list-readonly').html('');
+                //
+                //     $.each((syncItems.folders || {}), (folderId, absPath) => {
+                //         $foldersListRO.append('<li>' + absPath + '</li>');
+                //     });
+                // });
             });
         },
         folders: function (promise) {
@@ -53,17 +55,17 @@ let Router = {
                                 '> ')
                             .append('<span>' + absPath + '</span>');
 
-                        $foldersList.append($('<div class="settings-row" />').append(row));
+                        $foldersList.append($('<div />').append(row));
                     });
 
-                    promise.resolve();
                 });
 
 
 
             });
         },
-        logout: function (promise) {
+        logout: function (promise, scope) {
+
             chrome.storage.local.clear(function () {
                 Router.showPage('authentication');
             });
@@ -72,25 +74,71 @@ let Router = {
     showPage: function (identifier) {
         $('.options-page.active').removeClass('active');
 
-        let promise = new $.Deferred();
         if (this.controllers[identifier] == undefined) {
             console.error("No controller defined for: ", identifier);
+            return;
         }
 
-        this.controllers[identifier](promise);
+        let $section = $('#' + identifier + '-page');
 
-        promise.then((parameters) => {
+        $section.addClass('active');
+        console.info('Switched to the new section: ', identifier);
 
-            let $section = $('#' + identifier + '-page');
+        if (this._models[identifier] == undefined) {
 
-            $.each(parameters, (name, value) => {
-                $section.find('[model="' + name + '"]').text(value)
+            console.log('init model for', identifier);
+
+            let model = {foo:'bar'};
+            let handler = {
+                set: function (target, name, value) {
+
+                    target[name] = value;
+
+                    let $field = $section.find('[model="' + name + '"]');
+
+                    if ($field.length > 0) {
+                        if ($field.is(':checkbox')) {
+                            $field.prop('checked', value);
+                        } else {
+                            $field.text(value);
+                        }
+                    }
+                }
+            };
+
+            this._models[identifier] = new Proxy(model, handler);
+
+            let self = this;
+            $section.on('input', ':input[model]', function () {
+                let $field = $(this);
+                let val = null;
+
+                if ($field.is(':checkbox')) {
+                    val = $field.prop('checked');
+                } else {
+                    val = $field.val();
+                }
+
+                if (self._models[identifier][$field.attr('model')] != val) {
+                    self._models[identifier][$field.attr('model')] = val;
+                }
             });
 
-            $section.addClass('active');
-            console.info('Switched to the new section: ', identifier);
-        });
+            $section.find('[model]:not(input)').each(function () {
+                $(this).text(self._models[identifier][$(this).attr('model')]);
+            });
 
+            $section.find('input[model]:not(:checkbox):not(:radio)').each(function () {
+                $(this).val(self._models[identifier][$(this).attr('model')]);
+            });
+
+            $section.find('input[model]:checkbox, input[model]:radio').each(function () {
+                $(this).prop('checked', self._models[identifier][$(this).attr('model')]);
+            });
+
+        }
+
+        this.controllers[identifier](new $.Deferred(), this._models[identifier]);
     }
 };
 
@@ -148,15 +196,3 @@ $(document).on('click', '[is=section-link]', function (e) {
     Router.showPage($(this).attr('section'));
 });
 
-//
-// $(document).ready(function(){
-//     let link = document.querySelector('#auth-template');
-//     let template = link.import.querySelector('template');
-//     let style = link.import.querySelector('style');
-//
-//     // loading template
-//     document.querySelector('body').appendChild(
-//         document.importNode(template.content, true)
-//     );
-//
-// });

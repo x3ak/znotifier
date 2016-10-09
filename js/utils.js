@@ -44,5 +44,30 @@ function compileQueryParts(folders) {
     }
 }
 
+function getUTCNow() {
+    let now = new Date();
+    let time = now.getTime();
+    let offset = 0 ;//now.getTimezoneOffset();
+    offset = offset * 60000;
+    return time - offset;
+}
 
+function microsecondsToDuration(m) {
+    return (m / 1000).toString() + ' sec'
+}
 
+function utcToHourString(utc) {
+
+    let d = new Date(utc);
+
+    let mm = d.getMonth() + 1; // getMonth() is zero-based
+    let dd = d.getDate();
+
+    let h = d.getHours();
+    let m = d.getMinutes();
+
+    return [
+            (h < 10) ? '0' + h : h,
+            (m < 10) ? '0' + m : m
+        ].join(':');
+}

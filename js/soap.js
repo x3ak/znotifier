@@ -34,5 +34,65 @@ let SOAP = {
                 })
                 .done(callback)
             });
+    },
+    getAppointments: function (token) {
+
+        let start = getUTCNow();// - 2 * 60 * 60 * 1000; // 4 min
+
+        return $.ajax({
+            type: "POST",
+            url: 'https://webmail.pentalog.fr/service/soap',
+            data: `<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns="urn:zimbraMail">
+    <soap:Header>
+        <context xmlns="urn:zimbraMail">
+            <nonotify />
+            <noqualify />
+            <authToken>` + token + `</authToken>
+        </context>
+    </soap:Header>
+    <soap:Body>
+        <SearchRequest types="appointment" calExpandInstStart="` + start + `" sortBy="dateDesc" >
+            <query>is:anywhere</query>
+        </SearchRequest>
+    </soap:Body>
+</soap:Envelope>
+`
+
+            // apply range
+            // show planned duration  ? all day (alarms?!)
+            // show if is recurring
+            // <GetFreeBusyRequest  xmlns="urn:zimbraMail" s="`+start+`" e="`+end+`" name="pgalaton" />
+
+        });
+
+    },
+    getAppointment: function (token, uid) {
+
+        return $.ajax({
+            type: "POST",
+            url: 'https://webmail.pentalog.fr/service/soap',
+            data: `<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns="urn:zimbraMail">
+    <soap:Header>
+        <context xmlns="urn:zimbraMail">
+            <nonotify />
+            <noqualify />
+            <authToken>` + token + `</authToken>
+        </context>
+    </soap:Header>
+    <soap:Body>
+        <GetAppointmentRequest uid="`+uid+`" />
+    </soap:Body>
+</soap:Envelope>
+`
+
+            // apply range
+            // show planned duration  ? all day (alarms?!)
+            // show if is recurring
+            // <GetFreeBusyRequest  xmlns="urn:zimbraMail" s="`+start+`" e="`+end+`" name="pgalaton" />
+
+        });
+
     }
 };

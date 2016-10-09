@@ -2,7 +2,26 @@
 <html>
 <head>
     <style>
+        label {
+            display: inline-flex;
+            -webkit-user-select: none;
+            align-items: center;
+            padding-bottom: 7px;
+            padding-top: 7px;
+        }
 
+        label input ~ span {
+            -webkit-margin-start: 0.6em;
+            display: block;
+        }
+
+        label:hover {
+            color: black;
+        }
+
+        body {
+            color: rgb(48, 57, 66);
+        }
 
         form {
             display: flex;
@@ -28,6 +47,7 @@
 
         .settings-row {
             margin: 0.65em 0;
+            display: block;
         }
 
         body > section > section {
@@ -64,6 +84,9 @@
             max-height: 400px;
         }
 
+        input.tiny {
+            width: 2em;
+        }
     </style>
 </head>
 
@@ -81,9 +104,10 @@
         <div class="settings-row">
             <label>
                 <span>Password:</span>
-                <input type="password" name="password" required placeholder="Your zimbra password">
+                <input type="password" name="password" required placeholder="Your zimbra password" model="password">
             </label>
         </div>
+
 
         <div class="button-strip settings-row">
             <div>
@@ -98,27 +122,53 @@
 </section>
 
 <section class="options-page" id="index-page">
+
+    <section id="folders-section">
+        <h3>Mail</h3>
+
+        <div class="settings-row">
+            <label>
+                <input type="checkbox" model="mailEnabled">
+                <span>Enable mail notifications</span>
+            </label>
+        </div>
+
+        <div class="settings-row">
+            New messages will be checked every
+            <b model="interval"></b>
+            minute(s).
+        </div>
+
+        <div class="settings-row">
+            <button is="section-link" section="folders">Manage subscribed folders ...</button>
+        </div>
+    </section>
+
+    <section id="calendar-section">
+        <h3>Calendar</h3>
+
+        <div class="settings-row">
+            <label>
+                <input type="checkbox" model="calendarEnabled">
+                <span>Enable calendar notifications</span>
+            </label>
+        </div>
+
+        <div class="settings-row">
+            You will receive notification <b>5, 30</b>
+            <!--<input type="text" model="calendarBreak1" class="tiny" maxlength="2" size="1" />,-->
+            <!--<input type="text" model="calendarBreak2" class="tiny" maxlength="2" size="1" />,-->
+            <!--<input type="text" model="calendarBreak3" class="tiny" maxlength="2" size="1" />-->
+            minutes before the event.
+        </div>
+
+    </section>
+
     <section id="sign-in-section">
         <h3>Sign in</h3>
         <div id="sign-in-status" class="settings-row">Signed in as <span model="account"></span>.</div>
         <div id="sign-in-buttons" class="settings-row">
             <button is="section-link" section="logout">Disconnect your account</button>
-        </div>
-    </section>
-
-    <section id="scheduler-seciont">
-        <h3>Scheduler</h3>
-
-        <div class="settings-row">
-            Check for the new messages every <b model="interval"></b> minute(s).
-        </div>
-    </section>
-
-    <section id="folders-section">
-        <h3>Subscribed folders <a href="javascript:;" is="section-link" section="folders">manage</a> </h3>
-
-        <div class="settings-row">
-            Following folders will be verified for the new messages: <ul id="folders-list-readonly"></ul>
         </div>
     </section>
 </section>
@@ -134,6 +184,13 @@
             <button type="submit" id="save-subscribed-folders">Save</button>
         </div>
     </form>
+</section>
+
+<section class="options-page" id="calendar-page">
+    <h3>Calendar</h3>
+    <div class="settings-row">
+        Pick the folders that must be scheduled for the new message verifications.
+    </div>
 </section>
 
 <script src="js/jquery-3.1.1.min.js"></script>

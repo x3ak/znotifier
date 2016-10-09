@@ -21,7 +21,8 @@
     "storage",
     "tabs",
     "notifications",
-    "https://*.pentalog.fr/"
+    "alarms",
+    "https://*/"
   ],
   "options_ui": {
     "page": "options.html",
