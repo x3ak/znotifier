@@ -91,7 +91,8 @@ function showAppointmentNotification(appointment) {
 }
 
 // main app logic
-let interval = null;
+let mailInterval = null;
+let apptInterval = null;
 
 function start() {
     console.info('Starting background task.');
@@ -107,8 +108,13 @@ function start() {
 
         globalToken = token;
 
+        if (!settings.mailEnabled && !settings.calendarEnabled) {
+            console.warn('No notifications are enabled.')
+            return;
+        }
+
         if (settings.mailEnabled) {
-            interval = setInterval(function () {
+            mailInterval = setInterval(function () {
                 ZimbraNotifierService.searchForUnreadMessages(token, settings.folders)
                     .then((messages) => {
                         if (messages.length > 0) {
@@ -123,7 +129,7 @@ function start() {
 
 
         if (settings.calendarEnabled) {
-            interval = setInterval(function () {
+            apptInterval = setInterval(function () {
                 scheduleAlarms(token);
             }, settings.interval);
         }
@@ -181,9 +187,11 @@ function scheduleAlarms(token) {
 }
 
 function restart() {
-    console.info('Restarting background task.');
+    console.info('Restarting background tasks.');
 
-    clearInterval(interval);
+    clearInterval(mailInterval);
+    clearInterval(apptInterval);
+
     start();
 }
 

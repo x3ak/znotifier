@@ -55,20 +55,21 @@ let ZimbraNotifierService = {
     searchForUnreadMessages: function (token, folders) {
         let promise = new $.Deferred();
 
-        SOAP.search(token, compileQueryParts(folders), (response) => {
-            let messages = [];
+        SOAP.search(token, compileQueryParts(folders))
+            .then((result) => {
+                let messages = [];
 
-            $(response).find('SearchResponse > c').each(function (index, conversation) {
+                $(result).find('SearchResponse > c').each(function (index, conversation) {
 
-                let $conv = $(conversation);
-                messages.push({
-                    title: $conv.find('> su').text(),
-                    message: $conv.find('> fr').text()
-                })
+                    let $conv = $(conversation);
+                    messages.push({
+                        title: $conv.find('> su').text(),
+                        message: $conv.find('> fr').text()
+                    })
+                });
+
+                promise.resolve(messages);
             });
-
-            promise.resolve(messages);
-        });
 
         return promise;
     },

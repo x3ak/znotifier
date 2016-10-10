@@ -22,10 +22,12 @@ let Router = {
             $mailEnabled.on('change', changeModelByName);
             $calendarEnabled.on('change', changeModelByName);
 
+            // modifying view with the values from local storage
             chrome.storage.local.get(['account'], (items) => {
                 $accountName.text(items.account || '');
             });
 
+            // modifying view with the values from sync storage
             chrome.storage.sync.get(['mailEnabled', 'calendarEnabled'], (items) => {
                 $mailEnabled.prop('checked', items.mailEnabled == undefined ? true : items.mailEnabled);
                 $calendarEnabled.prop('checked', items.calendarEnabled == undefined ? true : items.calendarEnabled);
@@ -33,42 +35,40 @@ let Router = {
 
         },
         folders: function () {
-            SOAP.getFolderRequest(authToken, function (response) {
+            SOAP.getFolderRequest(authToken)
+                .then((response) => {
 
-                let foldersSubscribed = [];
+                    let foldersSubscribed = [];
 
-                chrome.storage.sync.get(['folders'], (items) => {
+                    chrome.storage.sync.get(['folders'], (items) => {
 
-                    if (items.folders != undefined) {
-                        $.each(items.folders, function (folderId) {
-                            foldersSubscribed.push(folderId);
+                        if (items.folders != undefined) {
+                            $.each(items.folders, function (folderId) {
+                                foldersSubscribed.push(folderId);
+                            });
+                        }
+
+                        let $foldersList = $('#folders-list').html('');
+                        let folders = [];
+
+                        $(response).find('folder[absFolderPath="/"] folder[view=message]').each((index, folder) => {
+
+                            let absPath = $(folder).attr('absFolderPath');
+                            let folderId = $(folder).attr('id');
+
+                            let row = $('<label />')
+                                .append('<input type=checkbox ' +
+                                    'name="' + folderId + '" ' +
+                                    'value="' + absPath + '"' +
+                                    (foldersSubscribed.indexOf(folderId) > -1 ? 'checked="checked"' : '') +
+                                    '> ')
+                                .append('<span>' + absPath + '</span>');
+
+                            $foldersList.append($('<div />').append(row));
                         });
-                    }
 
-                    let $foldersList = $('#folders-list').html('');
-                    let folders = [];
-
-                    $(response).find('folder[absFolderPath="/"] folder[view=message]').each((index, folder) => {
-
-                        let absPath = $(folder).attr('absFolderPath');
-                        let folderId = $(folder).attr('id');
-
-                        let row = $('<label />')
-                            .append('<input type=checkbox ' +
-                                'name="' + folderId + '" ' +
-                                'value="' + absPath + '"' +
-                                (foldersSubscribed.indexOf(folderId) > -1 ? 'checked="checked"' : '') +
-                                '> ')
-                            .append('<span>' + absPath + '</span>');
-
-                        $foldersList.append($('<div />').append(row));
                     });
-
                 });
-
-
-
-            });
         },
         logout: function () {
             chrome.storage.local.clear(function () {
@@ -95,7 +95,6 @@ let Router = {
 };
 
 chrome.storage.local.get(['token', 'account'], function (items) {
-
     if (items.token == undefined) {
         Router.showPage('authentication');
     } else {
@@ -125,12 +124,11 @@ $(document).on('submit', 'form#authentication-form', function (e) {
     let account = $(this).find('[name=account]').val();
     let password = $(this).find('[name=password]').val();
 
-    chrome.storage.local.set({ account: account });
-
     SOAP.authRequest(account, password, (response) => {
         let token = $(response).find('authToken').text();
         chrome.storage.local.set({
-            token: token
+            token: token,
+            account: account
         }, function () {
             console.info('Authenticated with token:', token);
             authToken = token;

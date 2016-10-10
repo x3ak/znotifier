@@ -1,12 +1,33 @@
 "use strict";
 
 let SOAP = {
+    _url: 'https://webmail.pentalog.fr/service/soap',
+    _send: function(envelope) {
+        return $.ajax({
+            type: "POST",
+            url: this._url,
+            data: envelope
+        });
+    },
+    _buildEnvelope: function (token, xmlns, body) {
+            return `<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns="` + xmlns + `">
+    <soap:Header>
+        <context>
+            <authToken>` + token + `</authToken>
+        </context>
+    </soap:Header>
+    <soap:Body>
+        `+ body +`
+    </soap:Body>
+</soap:Envelope>`;
+    },
     authRequest: function (account, password, callback, errorCallback) {
         $.get('soap/authRequest.xml')
             .done(function(xml){
                 $.ajax({
                     type: "POST",
-                    url: 'https://webmail.pentalog.fr/service/soap',
+                    url: this._url,
                     data: xml.replace(/ACCOUNT_PLACEHOLDER/g, account)
                             .replace(/PASSWORD_PLACEHOLDER/g, password)
                 })
@@ -15,82 +36,26 @@ let SOAP = {
             });
     },
     getFolderRequest: function (token, callback) {
-        $.get('soap/getFolderRequest.xml')
-            .done(function(xml){
-                $.ajax({
-                    type: "POST",
-                    url: 'https://webmail.pentalog.fr/service/soap',
-                    data: xml.replace(/AUTH_TOKEN_PLACEHOLDER/g, token)
-                })
-                .done(callback)
-            });
+        return this._send(
+            this._buildEnvelope(token, 'urn:zimbraMail', '<GetFolderRequest />')
+        )
+        .done(callback);
     },
     search: function (token, query, callback) {
-        $.get('soap/searchRequest.xml')
-            .done(function(xml){
-                $.ajax({
-                    type: "POST",
-                    url: 'https://webmail.pentalog.fr/service/soap',
-                    data: xml.replace(/AUTH_TOKEN_PLACEHOLDER/g, token)
-                            .replace(/QUERY_PLACEHOLDER/g, query)
-                })
-                .done(callback)
-            });
+        return this._send(
+            this._buildEnvelope(token, 'urn:zimbraMail', `<SearchRequest><query>` + query +`</query></SearchRequest>`)
+        )
+        .done(callback);
     },
     getAppointments: function (token) {
-
-        let start = getUTCNow();// - 2 * 60 * 60 * 1000; // 4 min
-
-        return $.ajax({
-            type: "POST",
-            url: 'https://webmail.pentalog.fr/service/soap',
-            data: `<?xml version="1.0" encoding="UTF-8"?>
-<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns="urn:zimbraMail">
-    <soap:Header>
-        <context xmlns="urn:zimbraMail">
-            <nonotify />
-            <noqualify />
-            <authToken>` + token + `</authToken>
-        </context>
-    </soap:Header>
-    <soap:Body>
-        <SearchRequest types="appointment" calExpandInstStart="` + start + `" sortBy="dateDesc" >
-            <query>is:anywhere</query>
-        </SearchRequest>
-    </soap:Body>
-</soap:Envelope>
-`
-
-
-        });
-
+        return this._send(
+            this._buildEnvelope(token, 'urn:zimbraMail', '<SearchRequest types="appointment" calExpandInstStart="` + getUTCNow() + `" sortBy="dateDesc">'+
+            '<query>is:anywhere</query></SearchRequest>')
+        )
     },
     getAppointment: function (token, uid) {
-
-        return $.ajax({
-            type: "POST",
-            url: 'https://webmail.pentalog.fr/service/soap',
-            data: `<?xml version="1.0" encoding="UTF-8"?>
-<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns="urn:zimbraMail">
-    <soap:Header>
-        <context xmlns="urn:zimbraMail">
-            <nonotify />
-            <noqualify />
-            <authToken>` + token + `</authToken>
-        </context>
-    </soap:Header>
-    <soap:Body>
-        <GetAppointmentRequest uid="`+uid+`" />
-    </soap:Body>
-</soap:Envelope>
-`
-
-            // apply range
-            // show planned duration  ? all day (alarms?!)
-            // show if is recurring
-            // <GetFreeBusyRequest  xmlns="urn:zimbraMail" s="`+start+`" e="`+end+`" name="pgalaton" />
-
-        });
-
+        return this._send(
+            this._buildEnvelope(token, 'urn:zimbraMail', '<GetAppointmentRequest uid="'+uid+'" />')
+        );
     }
 };
