@@ -6,7 +6,8 @@
   "name": "Zimbra notifier",
   "short_name": "znotifier",
   "description": "This extension show notification whenever new message arrives in zimbra",
-  "version": "2.0.0",
+  "version": "1.2",
+  "version_name": "2.0.0 alpha",
   "background": {
     "scripts": [
       "js/jquery-3.1.1.min.js",

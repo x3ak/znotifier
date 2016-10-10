@@ -1,3 +1,5 @@
+"use strict";
+
 let SOAP = {
     authRequest: function (account, password, callback, errorCallback) {
         $.get('soap/authRequest.xml')

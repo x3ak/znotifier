@@ -1,3 +1,5 @@
+"use strict";
+
 const NEW_MAIL_ID = 'new-mail';
 const APPOINTMENT_ID = 'appt-alert';
 

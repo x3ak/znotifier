@@ -1,3 +1,5 @@
+"use strict";
+
 function showPage() {
     chrome.tabs.query({
         url: [
@@ -92,3 +94,40 @@ function microsecondsToDuration ( seconds ) {
     }
     return returntext.trim();
 }
+
+
+let evtTgt = function() {
+    this.listeners = {};
+};
+
+evtTgt.prototype.listeners = null;
+evtTgt.prototype.addEventListener = function(type, callback) {
+    if(!(type in this.listeners)) {
+        this.listeners[type] = [];
+    }
+    this.listeners[type].push(callback);
+};
+
+evtTgt.prototype.removeEventListener = function(type, callback) {
+    if(!(type in this.listeners)) {
+        return;
+    }
+    let stack = this.listeners[type];
+    for(let i = 0, l = stack.length; i < l; i++) {
+        if(stack[i] === callback){
+            stack.splice(i, 1);
+            return this.removeEventListener(type, callback);
+        }
+    }
+};
+
+evtTgt.prototype.dispatchEvent = function(event) {
+    if(!(event.type in this.listeners)) {
+        return;
+    }
+    let stack = this.listeners[event.type];
+    event.target = this;
+    for(let i = 0, l = stack.length; i < l; i++) {
+        stack[i].call(this, event);
+    }
+};

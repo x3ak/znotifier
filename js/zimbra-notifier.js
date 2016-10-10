@@ -1,3 +1,5 @@
+"use strict";
+
 class Appointment {
 
     constructor (uid, name, location, alarmAt) {

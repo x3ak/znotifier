@@ -1,14 +1,16 @@
+"use strict";
+
 let authToken = null;
 
 let Router = {
     _models: {},
     controllers: {
-        authentication: function (promise, scope) {
+        authentication: function (scope) {
             chrome.storage.local.get(['account'], (items) => {
                 scope.account = items.account || '';
             });
         },
-        index: function (promise, scope) {
+        index: function (scope) {
             chrome.storage.local.get(['account', 'interval', 'mailEnabled', 'calendarEnabled'], (items) => {
 
                 scope.account = items.account || '';
@@ -16,17 +18,10 @@ let Router = {
 
                 scope.mailEnabled = (items.mailEnabled || 1) == 1;
                 scope.calendarEnabled = (items.calendarEnabled || 1) == 1;
-                //
-                // chrome.storage.sync.get(['folders'], (syncItems) => {
-                //     let $foldersListRO = $('#folders-list-readonly').html('');
-                //
-                //     $.each((syncItems.folders || {}), (folderId, absPath) => {
-                //         $foldersListRO.append('<li>' + absPath + '</li>');
-                //     });
-                // });
+
             });
         },
-        folders: function (promise) {
+        folders: function () {
             SOAP.getFolderRequest(authToken, function (response) {
 
                 let foldersSubscribed = [];
@@ -64,7 +59,7 @@ let Router = {
 
             });
         },
-        logout: function (promise, scope) {
+        logout: function (scope) {
 
             chrome.storage.local.clear(function () {
                 Router.showPage('authentication');
@@ -86,59 +81,76 @@ let Router = {
 
         if (this._models[identifier] == undefined) {
 
-            console.log('init model for', identifier);
+            console.log('init model for section:', identifier);
 
-            let model = {};
-            let handler = {
+            let model = {
+
+            };
+
+            this._models[identifier] = new Proxy(model, {
                 set: function (target, name, value) {
+
+                    if (target[name] == value) {
+                        return ;
+                    }
 
                     target[name] = value;
 
-                    let $field = $section.find('[model="' + name + '"]');
+                    let $fields = $section.find('[model="' + name + '"]');
 
-                    if ($field.length > 0) {
-                        if ($field.is(':checkbox')) {
-                            $field.prop('checked', value);
-                        } else {
-                            $field.text(value);
-                        }
+                    if ($fields.length > 0) {
+                        $fields.each(function(i, field){
+                            let $field = $(field);
+                            if ($field.is(':input')) {
+                                if ($field.is(':checkbox')) {
+                                    $field.prop('checked', value);
+                                } else {
+                                    $field.val(value);
+                                }
+                            } else {
+                                $field.text(value);
+                            }
+                        });
                     }
-                }
-            };
 
-            this._models[identifier] = new Proxy(model, handler);
+                    // clearTimeout(model.onChange._changeTO);
+                    // model.onChange._changeTO = setTimeout(()=>{
+                    //     model.onChange.dispatch(name);
+                    // }, 20);
+
+
+                    return true;
+                }
+            });
 
             let self = this;
-            $section.on('input', ':input[model]', function () {
+            $section.on('change', ':input[type=checkbox][model]', function () {
                 let $field = $(this);
-                let val = null;
+                let model = $field.attr('model');
+                let val = $field.prop('checked');
 
-                if ($field.is(':checkbox')) {
-                    val = $field.prop('checked');
-                } else {
-                    val = $field.val();
-                }
-
-                if (self._models[identifier][$field.attr('model')] != val) {
-                    self._models[identifier][$field.attr('model')] = val;
+                if (self._models[identifier][model] != val) {
+                    self._models[identifier][model] = val;
                 }
             });
 
-            $section.find('[model]:not(input)').each(function () {
-                $(this).text(self._models[identifier][$(this).attr('model')]);
-            });
-
-            $section.find('input[model]:not(:checkbox):not(:radio)').each(function () {
-                $(this).val(self._models[identifier][$(this).attr('model')]);
-            });
-
-            $section.find('input[model]:checkbox, input[model]:radio').each(function () {
-                $(this).prop('checked', self._models[identifier][$(this).attr('model')]);
-            });
+            //
+            // $section.find('[model]:not(input)').each(function () {
+            //     $(this).text(self._models[identifier][$(this).attr('model')]);
+            // });
+            //
+            // $section.find('input[model]:not(:checkbox):not(:radio)').each(function () {
+            //     $(this).val(self._models[identifier][$(this).attr('model')]);
+            // });
+            //
+            // $section.find('input[model]:checkbox, input[model]:radio').each(function () {
+            //     console.log($(this).attr('model'), self._models[identifier][$(this).attr('model')]);
+            //     $(this).prop('checked', self._models[identifier][$(this).attr('model')]);
+            // });
 
         }
 
-        this.controllers[identifier](new $.Deferred(), this._models[identifier]);
+        this.controllers[identifier](this._models[identifier]);
     }
 };
 
