@@ -88,7 +88,7 @@ let Router = {
 
             console.log('init model for', identifier);
 
-            let model = {foo:'bar'};
+            let model = {};
             let handler = {
                 set: function (target, name, value) {
 

@@ -40,10 +40,8 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-    console.log('alarm:', alarm);
     ZimbraNotifierService.getAppointment(null, alarm.name)
         .then((appointment) => {
-            console.log(appointment);
             showAppointmentNotification(appointment);
         });
 });
@@ -68,14 +66,22 @@ function showNotification(unreadMessages) {
 
 function showAppointmentNotification(appointment) {
 
-    // let suffix = (unreadMessages.length > 1) ? ' (' + unreadMessages.length + ')' : '';
+    let startsIn = microsecondsToDuration(appointment.start - getUTCNow());
 
-    let loc = appointment.location.length > 0 ? appointment.location + "\n" : '';
+    let time =
+        microsecondsToDuration(appointment.duration) + ' until ' + utcToHourString(appointment.end);
 
-    let expandedMessage =
-appointment.organizer + "\n" +
-utcToHourString(appointment.start) + ' - ' + utcToHourString(appointment.end) +
-' (' + microsecondsToDuration(appointment.duration) + ')';
+        // utcToHourString(appointment.start) +
+        // ' - ' + utcToHourString(appointment.end) +
+        // ' (' + microsecondsToDuration(appointment.duration) + ')';
+
+    let location = appointment.location.length > 0 ? appointment.location : '';
+
+    let message = `` +
+        // 'By ' + appointment.organizer + ' ' +
+        'In ' + startsIn +
+        "\n" + time ;
+
 
     chrome.notifications.create(APPOINTMENT_ID, {
         type: 'basic',
@@ -83,11 +89,11 @@ utcToHourString(appointment.start) + ' - ' + utcToHourString(appointment.end) +
         title: appointment.name,
         requireInteraction: true,
         isClickable: true,
-        message: expandedMessage,
-        contextMessage: loc,
-        buttons: [
-            {title: 'Dismiss', iconUrl: 'images/action-cancel.png'}
-        ]
+        message: message,
+        contextMessage: location,
+        // buttons: [
+        //     {title: 'Dismiss', iconUrl: 'images/action-cancel.png'}
+        // ]
     });
 }
 

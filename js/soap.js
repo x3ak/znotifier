@@ -59,10 +59,6 @@ let SOAP = {
 </soap:Envelope>
 `
 
-            // apply range
-            // show planned duration  ? all day (alarms?!)
-            // show if is recurring
-            // <GetFreeBusyRequest  xmlns="urn:zimbraMail" s="`+start+`" e="`+end+`" name="pgalaton" />
 
         });
 

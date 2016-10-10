@@ -80,16 +80,23 @@ let ZimbraNotifierService = {
 
                 $(result).find('appt[alarm=1]').each((index, appointment) => {
                     let $appointment = $(appointment);
-                    let nextAlarm = $appointment.find('alarmData').attr('nextAlarm');
+                    let nextAlarm = parseInt($appointment.find('alarmData').attr('nextAlarm'));
 
-                    if (nextAlarm > getUTCNow()) {
+                    if (nextAlarm < getUTCNow()) {
+                        return;
+                    }
+
+                    console.log(nextAlarm, nextAlarm > getUTCNow(), new Date(nextAlarm));
+
+                    // console.log(appointment, nextAlarm > getUTCNow());
+                    // if (nextAlarm > getUTCNow()) {
                         appointments.push(new Appointment(
                             $appointment.attr('uid'),
                             $appointment.attr('name'),
                             $appointment.attr('loc'),
                             nextAlarm
                         ));
-                    }
+                    // }
                 });
 
                 promise.resolve(appointments);
@@ -100,32 +107,34 @@ let ZimbraNotifierService = {
     getAppointment: function (token, uid) {
         let promise = new $.Deferred();
 
-        SOAP.getAppointment(token, uid)
+        SOAP.getAppointments(token)
             .then((result) => {
-                let appointment = {};
+                let $appointment = $(result).find('appt[uid="' + uid + '"]');
 
-                console.log(result);
+                if ($appointment.length == 0) {
+                    return;
+                }
 
-                let $component = $(result).find('comp');
+                let name = $appointment.attr('name');
+                let organizer = $appointment.find('or').attr('d');
+                let instanceStart = parseInt($appointment.find('alarmData').attr('alarmInstStart'));
+                let duration = parseInt($appointment.attr('dur'));
+                let end = instanceStart + duration;
 
-                let start = $component.find('s').attr('u');
-                let end = $component.find('e').attr('u');
-                let organizer = $component.find('or').attr('d');
 
-                let location = $component.attr('loc');
-
+                let location = $appointment.attr('loc');
                 let m = location.match(/"\s\<(.*)\@/);
                 if (m) {
                     location = m.pop();
                 }
 
                 promise.resolve({
-                    name: $component.attr('name'),
+                    name: name,
                     location: location,
                     organizer: organizer,
-                    start: parseInt(start),
+                    start: parseInt(instanceStart),
                     end: parseInt(end),
-                    duration: end - start
+                    duration: duration,
                 });
             });
 
