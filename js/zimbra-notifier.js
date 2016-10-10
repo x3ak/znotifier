@@ -38,8 +38,8 @@ let ZimbraNotifierService = {
             promise.resolve({
                 folders: items.folders || {},
                 interval: ((items.interval || 1) * 60* 1000),
-                mailEnabled: (items.mailEnabled || 1) == 1,
-                calendarEnabled: (items.calendarEnabled || 1) == 1
+                mailEnabled: items.mailEnabled == undefined ? true : items.mailEnabled,
+                calendarEnabled: items.calendarEnabled == undefined ? true : items.calendarEnabled
             });
         });
 
@@ -88,17 +88,12 @@ let ZimbraNotifierService = {
                         return;
                     }
 
-                    console.log(nextAlarm, nextAlarm > getUTCNow(), new Date(nextAlarm));
-
-                    // console.log(appointment, nextAlarm > getUTCNow());
-                    // if (nextAlarm > getUTCNow()) {
-                        appointments.push(new Appointment(
-                            $appointment.attr('uid'),
-                            $appointment.attr('name'),
-                            $appointment.attr('loc'),
-                            nextAlarm
-                        ));
-                    // }
+                    appointments.push(new Appointment(
+                        $appointment.attr('uid'),
+                        $appointment.attr('name'),
+                        $appointment.attr('loc'),
+                        nextAlarm
+                    ));
                 });
 
                 promise.resolve(appointments);

@@ -1,5 +1,7 @@
 "use strict";
 
+let globalToken = null;
+
 const NEW_MAIL_ID = 'new-mail';
 const APPOINTMENT_ID = 'appt-alert';
 
@@ -24,12 +26,12 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
     for (let key in changes) {
         switch (namespace) {
             case 'sync':
-                if (['folders'].indexOf(key) != -1) {
+                if (['folders','mailEnabled','calendarEnabled'].indexOf(key) != -1) {
                     shouldRestart = true;
                 }
                 break;
             case 'local':
-                if (['token', 'account', 'interval', 'mailEnabled', 'calendarEnabled'].indexOf(key) != -1) {
+                if (['token', 'account', 'interval'].indexOf(key) != -1) {
                     shouldRestart = true;
                 }
                 break;
@@ -42,7 +44,7 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-    ZimbraNotifierService.getAppointment(null, alarm.name)
+    ZimbraNotifierService.getAppointment(globalToken, alarm.name)
         .then((appointment) => {
             showAppointmentNotification(appointment);
         });
@@ -70,19 +72,11 @@ function showAppointmentNotification(appointment) {
 
     let startsIn = microsecondsToDuration(appointment.start - getUTCNow());
 
-    let time =
-        microsecondsToDuration(appointment.duration) + ' until ' + utcToHourString(appointment.end);
-
-        // utcToHourString(appointment.start) +
-        // ' - ' + utcToHourString(appointment.end) +
-        // ' (' + microsecondsToDuration(appointment.duration) + ')';
+    let time = microsecondsToDuration(appointment.duration) + ' until ' + utcToHourString(appointment.end);
 
     let location = appointment.location.length > 0 ? appointment.location : '';
 
-    let message = `` +
-        // 'By ' + appointment.organizer + ' ' +
-        'In ' + startsIn +
-        "\n" + time ;
+    let message = 'In ' + startsIn + "\n" + time ;
 
 
     chrome.notifications.create(APPOINTMENT_ID, {
@@ -92,10 +86,7 @@ function showAppointmentNotification(appointment) {
         requireInteraction: true,
         isClickable: true,
         message: message,
-        contextMessage: location,
-        // buttons: [
-        //     {title: 'Dismiss', iconUrl: 'images/action-cancel.png'}
-        // ]
+        contextMessage: location
     });
 }
 
@@ -113,6 +104,8 @@ function start() {
         console.info('Using persisted token: ', token);
         console.info('Loaded settings: ', settings);
         console.groupEnd();
+
+        globalToken = token;
 
         if (settings.mailEnabled) {
             interval = setInterval(function () {
@@ -178,7 +171,7 @@ function scheduleAlarms(token) {
                     });
 
                     if (index == undefined) {
-                        console.log('Clearing dangling alarm:', alarm.name);
+                        console.info('Clearing dangling alarm:', alarm.name);
                         chrome.alarms.clear(alarm.name);
                     }
                 });

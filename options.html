@@ -128,15 +128,9 @@
 
         <div class="settings-row">
             <label>
-                <input type="checkbox" model="mailEnabled">
+                <input type="checkbox" name="mailEnabled">
                 <span>Enable mail notifications</span>
             </label>
-        </div>
-
-        <div class="settings-row" >
-            New messages will be checked every
-            <b model="interval"></b>
-            minute(s).
         </div>
 
         <div class="settings-row">
@@ -149,20 +143,16 @@
 
         <div class="settings-row">
             <label>
-                <input type="checkbox" model="calendarEnabled">
+                <input type="checkbox" name="calendarEnabled">
                 <span>Enable calendar notifications</span>
             </label>
-        </div>
-
-        <div class="settings-row">
-            Your zimbra notification schemes are used.
         </div>
 
     </section>
 
     <section id="sign-in-section">
         <h3>Sign in</h3>
-        <div id="sign-in-status" class="settings-row">Signed in as <span model="account"></span>.</div>
+        <div id="sign-in-status" class="settings-row">Signed in as <span id="sign-in-account"></span>.</div>
         <div id="sign-in-buttons" class="settings-row">
             <button is="section-link" section="logout">Disconnect your account</button>
         </div>
