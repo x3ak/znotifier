@@ -21,7 +21,7 @@ let SOAP = {
         return this._wrapMessage(xmlns, body, `<context><authToken>` + token + `</authToken></context>`);
     },
     authRequest: function (account, password) {
-        this._send(
+        return this._send(
             this._wrapMessage('urn:zimbraAccount', `<AuthRequest><account by="name">` + account + `</account><password>` + password + `</password></AuthRequest>`)
         );
     },
