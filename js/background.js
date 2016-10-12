@@ -109,7 +109,7 @@ function start() {
         globalToken = token;
 
         if (!settings.mailEnabled && !settings.calendarEnabled) {
-            console.warn('No notifications are enabled.')
+            console.warn('No notifications are enabled.');
             return;
         }
 
@@ -121,6 +121,7 @@ function start() {
                             console.info('Found unread messages:', messages);
                             showNotification(messages);
                         } else {
+                            chrome.notifications.clear(NEW_MAIL_ID);
                             console.info('No unread messages has been found:');
                         }
                     });

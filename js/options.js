@@ -36,7 +36,7 @@ let Router = {
         },
         folders: function () {
             SOAP.getFolderRequest(authToken)
-                .then((response) => {
+                .done((response) => {
 
                     let foldersSubscribed = [];
 
@@ -124,21 +124,26 @@ $(document).on('submit', 'form#authentication-form', function (e) {
     let account = $(this).find('[name=account]').val();
     let password = $(this).find('[name=password]').val();
 
-    SOAP.authRequest(account, password, (response) => {
-        let token = $(response).find('authToken').text();
-        chrome.storage.local.set({
-            token: token,
-            account: account
-        }, function () {
-            console.info('Authenticated with token:', token);
-            authToken = token;
+    SOAP.authRequest(account, password)
+        .done((response) => {
+            let token = $(response).find('authToken').text();
+            let lifeTime = $(response).find('lifetime').text();
 
-            Router.showPage('index');
+            chrome.storage.local.set({
+                token: token,
+                account: account
+            }, function () {
+                console.info('Authenticated with token:', token);
+                authToken = token;
+
+                Router.showPage('index');
+            });
+
+        })
+        .fail(() => {
+            $('#authentication-error').show();
+            Router.showPage('authentication');
         });
-    }, () => {
-        $('#authentication-error').show();
-        Router.showPage('authentication');
-    });
 });
 
 $(document).on('click', '[is=section-link]', function (e) {

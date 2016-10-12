@@ -1,7 +1,6 @@
 "use strict";
 
 class Appointment {
-
     constructor (uid, name, location, alarmAt) {
         this.uid = uid;
         this.name = name;

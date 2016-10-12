@@ -9,52 +9,31 @@ let SOAP = {
             data: envelope
         });
     },
-    _buildEnvelope: function (token, xmlns, body) {
+    _wrapMessage: function (xmlns, body, header = '') {
         return `<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns="` + xmlns + `">
-    <soap:Header>
-        <context>
-            <authToken>` + token + `</authToken>
-        </context>
-    </soap:Header>
-    <soap:Body>
-        `+ body +`
-    </soap:Body>
-</soap:Envelope>`;
-    },
-    authRequest: function (account, password, callback, errorCallback) {
-        return $.ajax({
-            type: "POST",
-            url: this._url,
-            data: `<?xml version="1.0" encoding="UTF-8"?>
-<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
-    <soap:Header>
-        <context xmlns="urn:zimbraAccount">
-        </context>
-    </soap:Header>
-    <soap:Body>
-        <AuthRequest xmlns="urn:zimbraAccount">
-            <account by="name">` + account + `</account>
-            <password>` + password + `</password>
-        </AuthRequest>
-    </soap:Body>
+    <soap:Header>` + header + `</soap:Header>
+    <soap:Body>` + body + `</soap:Body>
 </soap:Envelope>
-`
-            })
-            .done(callback)
-            .fail(errorCallback || function () {});
+`;
     },
-    getFolderRequest: function (token, callback) {
+    _buildEnvelope: function (token, xmlns, body) {
+        return this._wrapMessage(xmlns, body, `<context><authToken>` + token + `</authToken></context>`);
+    },
+    authRequest: function (account, password) {
+        this._send(
+            this._wrapMessage('urn:zimbraAccount', `<AuthRequest><account by="name">` + account + `</account><password>` + password + `</password></AuthRequest>`)
+        );
+    },
+    getFolderRequest: function (token) {
         return this._send(
             this._buildEnvelope(token, 'urn:zimbraMail', '<GetFolderRequest />')
-        )
-        .done(callback);
+        );
     },
-    search: function (token, query, callback) {
+    search: function (token, query) {
         return this._send(
             this._buildEnvelope(token, 'urn:zimbraMail', '<SearchRequest><query>' + query +'</query></SearchRequest>')
-        )
-        .done(callback);
+        );
     },
     getAppointments: function (token) {
         return this._send(
