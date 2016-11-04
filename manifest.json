@@ -22,7 +22,7 @@
     "tabs",
     "notifications",
     "alarms",
-    "https://*/"
+    "https://webmail.pentalog.fr/*"
   ],
   "options_ui": {
     "page": "options.html",
