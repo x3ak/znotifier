@@ -44,28 +44,41 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-    ZimbraNotifierService.getAppointment(globalToken, alarm.name)
-        .then((appointment) => {
-            showAppointmentNotification(appointment);
-        });
+    ZimbraNotifierService
+        .getAppointment(globalToken, alarm.name)
+        .then(showAppointmentNotification);
 });
+
+function searchForUnreadMessages(token, folders) {
+    ZimbraNotifierService
+        .searchForUnreadMessages(token, folders)
+        .then(showNotification);
+}
 
 function showNotification(unreadMessages) {
 
-    let suffix = (unreadMessages.length > 1) ? ' (' + unreadMessages.length + ')' : '';
+    if (unreadMessages.length > 0) {
+        console.info('Found unread messages:', unreadMessages);
 
-    chrome.notifications.create(NEW_MAIL_ID, {
-        type: 'list',
-        iconUrl: 'images/mail-128.png',
-        title: 'New message!' + suffix,
-        requireInteraction: true,
-        isClickable: true,
-        items: unreadMessages,
-        message: 'message',
-        buttons: [
-            {title: 'Dismiss', iconUrl: 'images/action-cancel.png'}
-        ]
-    });
+        let suffix = (unreadMessages.length > 1) ? ' (' + unreadMessages.length + ')' : '';
+
+        chrome.notifications.create(NEW_MAIL_ID, {
+            type: 'list',
+            iconUrl: 'images/mail-128.png',
+            title: 'New message!' + suffix,
+            requireInteraction: true,
+            isClickable: true,
+            items: unreadMessages,
+            message: 'message',
+            buttons: [
+                {title: 'Dismiss', iconUrl: 'images/action-cancel.png'}
+            ]
+        });
+
+    } else {
+        chrome.notifications.clear(NEW_MAIL_ID);
+        console.info('No unread messages has been found:');
+    }
 }
 
 function showAppointmentNotification(appointment) {
@@ -108,26 +121,11 @@ function start() {
 
         globalToken = token;
 
-        if (!settings.mailEnabled && !settings.calendarEnabled) {
-            console.warn('No notifications are enabled.');
-            return;
-        }
-
         if (settings.mailEnabled) {
             mailInterval = setInterval(function () {
-                ZimbraNotifierService.searchForUnreadMessages(token, settings.folders)
-                    .then((messages) => {
-                        if (messages.length > 0) {
-                            console.info('Found unread messages:', messages);
-                            showNotification(messages);
-                        } else {
-                            chrome.notifications.clear(NEW_MAIL_ID);
-                            console.info('No unread messages has been found:');
-                        }
-                    });
+                searchForUnreadMessages(token, settings.folders);
             }, settings.interval);
         }
-
 
         if (settings.calendarEnabled) {
             apptInterval = setInterval(function () {
@@ -135,8 +133,8 @@ function start() {
             }, settings.interval);
         }
 
-    }).fail(() => {
-        console.warn('Initialization failed!');
+    }).fail((e) => {
+        console.warn('Initialization failed!', e);
         chrome.runtime.openOptionsPage();
     });
 

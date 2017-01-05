@@ -68,6 +68,10 @@ let Router = {
                         });
 
                     });
+                })
+                .fail(() => {
+                    $('#authentication-error').show();
+                    Router.showPage('authentication');
                 });
         },
         logout: function () {

@@ -54,7 +54,7 @@ let ZimbraNotifierService = {
     searchForUnreadMessages: function (token, folders) {
         let promise = new $.Deferred();
 
-        SOAP.search(token, compileQueryParts(folders))
+        SOAP.search(token, folders)
             .then((result) => {
                 let messages = [];
 
@@ -68,6 +68,9 @@ let ZimbraNotifierService = {
                 });
 
                 promise.resolve(messages);
+            })
+            .fail(() => {
+                chrome.runtime.openOptionsPage();
             });
 
         return promise;
@@ -97,6 +100,9 @@ let ZimbraNotifierService = {
                 });
 
                 promise.resolve(appointments);
+            })
+            .fail(() => {
+                chrome.runtime.openOptionsPage();
             });
 
         return promise;

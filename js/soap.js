@@ -30,9 +30,9 @@ let SOAP = {
             this._buildEnvelope(token, 'urn:zimbraMail', '<GetFolderRequest />')
         );
     },
-    search: function (token, query) {
+    search: function (token, folders) {
         return this._send(
-            this._buildEnvelope(token, 'urn:zimbraMail', '<SearchRequest><query>' + query +'</query></SearchRequest>')
+            this._buildEnvelope(token, 'urn:zimbraMail', '<SearchRequest><query>' + compileQueryParts(folders) +'</query></SearchRequest>')
         );
     },
     getAppointments: function (token) {
